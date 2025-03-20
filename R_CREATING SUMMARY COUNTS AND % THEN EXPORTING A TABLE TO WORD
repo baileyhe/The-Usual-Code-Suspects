@@ -1,0 +1,31 @@
+####R_CREATING SUMMARY COUNTS AND % THEN EXPORTING A TABLE TO WORD####
+
+# Install if needed
+install.packages(c("gtsummary", "flextable", "officer"))
+
+library(gtsummary)
+library(flextable)
+library(officer)
+
+# Example summary table
+summary_table <- df %>%
+  tbl_summary(
+    by = Group,  # Your factor variable
+    statistic = list(all_continuous() ~ "{mean} ± {sd}",
+                     all_categorical() ~ "{n} ({p}%)"),
+    digits = all_continuous() ~ 2
+  ) %>%
+  add_overall() %>% 
+  bold_labels()
+
+# Convert to flextable
+ft_table <- as_flex_table(summary_table)
+
+# Create Word document and add the table
+doc <- read_docx() %>%
+  body_add_flextable(ft_table) %>%
+  body_add_par("Generated with gtsummary", style = "Normal")
+
+# Save it
+print(doc, target = "summary_table.docx")
+

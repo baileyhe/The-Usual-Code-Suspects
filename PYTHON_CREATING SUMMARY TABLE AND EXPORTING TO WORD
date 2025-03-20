@@ -1,0 +1,52 @@
+#PYTHON_CREATING SUMMARY TABLE AND EXPORTING TO WORD
+
+import pandas as pd
+import numpy as np
+from tableone import TableOne
+
+# Example: Load or create your DataFrame
+# df = pd.read_csv("your_data.csv")
+
+# Assume 'Group' is your factor variable
+factor_variable = 'Group'
+
+# Create summary table
+# Specify categorical variables (excluding the factor itself)
+categorical_vars = df.select_dtypes(include=['object', 'category']).columns.tolist()
+categorical_vars = [var for var in categorical_vars if var != factor_variable]
+
+# Create the table
+table1 = TableOne(data=df, 
+                  columns=df.columns.tolist(), 
+                  categorical=categorical_vars,
+                  groupby=factor_variable, 
+                  pval=False,  # Set True if you want p-values
+                  isnull=False)
+
+# Convert to DataFrame for export
+summary_df = table1.tableone.reset_index()
+
+from docx import Document
+from docx.shared import Inches
+
+# Create a new Word document
+doc = Document()
+doc.add_heading('Summary Table', level=1)
+
+# Add the table to the document
+t = doc.add_table(rows=1, cols=len(summary_df.columns))
+t.style = 'Table Grid'
+
+# Add header
+hdr_cells = t.rows[0].cells
+for i, col_name in enumerate(summary_df.columns):
+    hdr_cells[i].text = str(col_name)
+
+# Add rows
+for _, row in summary_df.iterrows():
+    row_cells = t.add_row().cells
+    for i, item in enumerate(row):
+        row_cells[i].text = str(item)
+
+# Save the document
+doc.save('summary_table.docx')

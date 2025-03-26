@@ -1,0 +1,24 @@
+## Initial DataFrame Cleanup Template
+
+# 1. Clean column names: lowercase + underscores instead of spaces
+names(df) <- tolower(gsub(" ", "_", names(df)))
+
+# 2. Standardize NA values: convert "N/A", "na", "NA", "" to actual NA
+na_strings <- c("N/A", "na", "NA", "")
+df <- as.data.frame(lapply(df, function(col) {
+  if (is.character(col)) {
+    col <- trimws(col)
+    col[col %in% na_strings] <- NA
+  }
+  return(col)
+}), stringsAsFactors = FALSE)
+
+# 3. Clean categorical (character or factor) columns: lowercase + underscores
+df <- as.data.frame(lapply(df, function(col) {
+  if (is.factor(col) || is.character(col)) {
+    col <- tolower(col)
+    col <- gsub(" ", "_", col)
+    col <- as.character(col)
+  }
+  return(col)
+}), stringsAsFactors = FALSE)

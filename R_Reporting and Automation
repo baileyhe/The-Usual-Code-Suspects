@@ -1,0 +1,49 @@
+### AUTOMATED REPORTING FOR HORSE ANALYSIS 🐎 ###
+
+# 1. Create a basic RMarkdown report
+# Save this as "horse_report.Rmd"
+
+# ---
+# title: "Horse Performance Report"
+# output: html_document
+# ---
+
+# ```{r setup}
+# library(ggplot2)
+# summary(horse_data)
+# ```
+
+# ```{r plot-speed}
+# ggplot(horse_data, aes(x = speed)) +
+#   geom_histogram(binwidth = 1, fill = "steelblue") +
+#   labs(title = "Distribution of Horse Speeds")
+# ```
+
+# ```{r boxplot-breed}
+# ggplot(horse_data, aes(x = breed, y = jump_height)) +
+#   geom_boxplot() +
+#   labs(title = "Jump Height by Breed")
+# ```
+
+# ```{r model}
+# model <- lm(speed ~ breed + heart_rate + training_hours, data = horse_data)
+# summary(model)
+# ```
+
+# ```
+
+# 2. Render the report automatically from an R script
+# install.packages("rmarkdown")
+library(rmarkdown)
+
+# Render the report
+render("horse_report.Rmd")
+
+# 3. Schedule it (e.g., weekly reports) using RStudio add-in or cron job
+# RStudio: Addins > Schedule R Scripts
+# Or in terminal:
+# Rscript -e "rmarkdown::render('horse_report.Rmd')"
+
+# 🐎 Example insight:
+# "Every Monday, generate a report showing the latest horse performance stats,
+# trends in stamina, and breed comparisons — all without clicking a thing."

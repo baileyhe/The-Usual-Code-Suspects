@@ -1,0 +1,30 @@
+### MODEL DIAGNOSTICS FOR LINEAR REGRESSION ###
+
+# Fit a model: Predict race time from weight, heart rate, and breed
+lm_model <- lm(race_time ~ weight + heart_rate + breed, data = horse_data)
+
+# 1. Residual Plot: Check for non-linearity or heteroscedasticity
+plot(lm_model$fitted.values, resid(lm_model),
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residual Plot — Should be a random cloud")
+abline(h = 0, col = "red")
+
+# 2. Q-Q Plot: Are residuals normally distributed?
+qqnorm(resid(lm_model)); qqline(resid(lm_model), col = "red")
+
+# 3. Histogram of residuals
+hist(resid(lm_model), main = "Histogram of Residuals", xlab = "Residuals")
+
+# 4. Variance Inflation Factor (VIF): Check multicollinearity
+# install.packages("car")
+library(car)
+vif(lm_model)
+
+# 5. Cook's Distance: Find influential points
+plot(cooks.distance(lm_model), type = "h",
+     main = "Cook’s Distance — Outliers or Influential Horses",
+     ylab = "Cook’s Distance")
+
+# 🐎 Example insight:
+# "Our model predicting race time is valid. Residuals are roughly normal, no obvious multicollinearity,
+# and one particularly fast horse might be unusually influential."

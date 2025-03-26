@@ -1,0 +1,131 @@
+### SIMPLE MACHINE LEARNING TECHNIQUES IN R — Horse Edition 🐎 ###
+
+# =======================================
+# 1. LINEAR REGRESSION (as ML)
+# =======================================
+# Use: Predict a numeric outcome from multiple features.
+# Advantage: Fast, interpretable, handles continuous outcomes.
+# Benefit vs traditional stats: Used for prediction rather than inference.
+# Example insight: "Predict a horse’s race time using physical and training variables."
+
+model <- lm(race_time ~ heart_rate + weight + training_hours, data = horse_data)
+summary(model)
+predicted_times <- predict(model, newdata = horse_data)
+
+# =======================================
+# 2. LOGISTIC REGRESSION (Binary Classification)
+# =======================================
+# Use: Predict binary outcome (yes/no, 0/1).
+# Benefit vs frequentist: In ML context, used for **probabilistic classification**.
+# Example insight: "Predict whether a horse will clear a jump."
+
+log_model <- glm(clears_jump ~ breed + leg_strength + anxiety, data = horse_data, family = "binomial")
+pred_probs <- predict(log_model, type = "response")
+
+# =======================================
+# 3. K-NEAREST NEIGHBORS (KNN)
+# =======================================
+# Use: Predict class based on similarity to nearby points.
+# Benefit: Non-parametric, no assumptions about data distribution.
+# Example insight: "Classify horse breed based on performance traits."
+
+# install.packages("class")
+library(class)
+set.seed(123)
+train_idx <- sample(1:nrow(horse_data), 0.7 * nrow(horse_data))
+train <- horse_data[train_idx, ]
+test <- horse_data[-train_idx, ]
+
+knn_pred <- knn(train = train[, c("speed", "endurance")],
+                test = test[, c("speed", "endurance")],
+                cl = train$breed, k = 3)
+
+table(Predicted = knn_pred, Actual = test$breed)
+
+# =======================================
+# 4. DECISION TREES
+# =======================================
+# Use: Predict categorical or numeric outcome with interpretable flowcharts.
+# Benefit: No assumptions, handles interactions & nonlinearities.
+# Example insight: "Determine decision rules for classifying horse temperament."
+
+# install.packages("rpart")
+library(rpart)
+tree_model <- rpart(temperament ~ breed + weight + training_method, data = horse_data)
+plot(tree_model); text(tree_model)
+
+# =======================================
+# 5. RANDOM FORESTS
+# =======================================
+# Use: Ensemble of decision trees, good for both classification and regression.
+# Benefit: More accurate, handles complex interactions, robust to overfitting.
+# Example insight: "Predict jump success using many features."
+
+# install.packages("randomForest")
+library(randomForest)
+rf_model <- randomForest(jump_success ~ ., data = horse_data, importance = TRUE)
+print(rf_model)
+importance(rf_model)
+
+# =======================================
+# 6. SUPPORT VECTOR MACHINES (SVM)
+# =======================================
+# Use: Classify data by finding the best boundary (hyperplane).
+# Benefit: Great for high-dimensional or non-linearly separable data.
+# Example insight: "Classify if a horse is high-performance based on physiology."
+
+# install.packages("e1071")
+library(e1071)
+svm_model <- svm(high_performance ~ speed + endurance + acceleration, data = horse_data)
+summary(svm_model)
+
+# =======================================
+# 7. NAIVE BAYES CLASSIFIER
+# =======================================
+# Use: Fast classification using Bayes' theorem with independence assumption.
+# Benefit: Very fast, works well with text/categorical data.
+# Example insight: "Classify pasture preference using behavioral categories."
+
+# install.packages("e1071")
+nb_model <- naiveBayes(pasture_preference ~ temperament + training_method, data = horse_data)
+preds <- predict(nb_model, horse_data)
+table(preds, horse_data$pasture_preference)
+
+# =======================================
+# 8. K-MEANS CLUSTERING
+# =======================================
+# Use: Find natural groupings (unsupervised).
+# Benefit: Useful for discovery when no labels are available.
+# Example insight: "Group horses based on body shape and fitness traits."
+
+horse_scaled <- scale(horse_data[, c("height", "weight", "speed", "stamina")])
+set.seed(42)
+clusters <- kmeans(horse_scaled, centers = 3)
+horse_data$cluster <- clusters$cluster
+table(horse_data$cluster)
+
+# =======================================
+# 9. PRINCIPAL COMPONENT ANALYSIS (PCA)
+# =======================================
+# Use: Reduce many numeric variables into fewer components.
+# Benefit: Simplifies high-dimensional data, good for visualization & noise reduction.
+# Example insight: "Summarize horse physical traits into 2 components."
+
+pca <- prcomp(horse_data[, c("height", "weight", "leg_length", "neck_length")], scale. = TRUE)
+summary(pca)
+biplot(pca)
+
+# =======================================
+# 10. CROSS-VALIDATION (e.g., k-Fold CV)
+# =======================================
+# Use: Evaluate model performance reliably by splitting data multiple times.
+# Benefit: Reduces overfitting, provides more honest accuracy estimates.
+# Example insight: "Assess how well our model generalizes to unseen horses."
+
+# install.packages("caret")
+library(caret)
+set.seed(123)
+train_control <- trainControl(method = "cv", number = 5)
+cv_model <- train(jump_success ~ speed + heart_rate, data = horse_data,
+                  method = "glm", family = "binomial", trControl = train_control)
+print(cv_model)

@@ -1,0 +1,25 @@
+### TIME SERIES ANALYSIS FOR HORSE DATA 🐎 ###
+
+# Example dataset: Weekly stamina scores for a single horse
+# horse_ts <- ts(horse_data$stamina, start = c(2024, 1), frequency = 52)
+
+# 1. Plot the time series
+plot(horse_ts, main = "Weekly Stamina Over Time", ylab = "Stamina Score", xlab = "Week")
+
+# 2. Decompose time series into trend, seasonality, and residuals
+decomp <- decompose(horse_ts)
+plot(decomp)
+
+# 3. Autocorrelation: Check if current values depend on past values
+acf(horse_ts, main = "ACF — Is stamina auto-correlated over time?")
+
+# 4. Forecasting with ARIMA
+# install.packages("forecast")
+library(forecast)
+model <- auto.arima(horse_ts)
+forecast_result <- forecast(model, h = 10)
+plot(forecast_result, main = "10-Week Forecast of Horse Stamina")
+
+# 🐎 Example insight:
+# "This horse’s stamina shows a gradual upward trend with weekly fluctuations.
+# Forecasting suggests performance will peak around week 12 before stabilizing."

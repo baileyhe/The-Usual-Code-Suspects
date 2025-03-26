@@ -1,0 +1,45 @@
+### TEXT ANALYSIS FOR HORSE NOTES 🐎 ###
+
+# Example: horse_data$trainer_notes contains free-text descriptions
+
+# install.packages(c("tidytext", "dplyr", "ggplot2", "stringr"))
+library(tidytext)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+
+# 1. Tokenize (break text into individual words)
+word_data <- horse_data %>%
+  select(trainer_notes) %>%
+  unnest_tokens(word, trainer_notes)
+
+# 2. Remove common stopwords ("the", "and", etc.)
+data("stop_words")
+word_data <- word_data %>%
+  anti_join(stop_words, by = "word")
+
+# 3. Word frequency
+word_freq <- word_data %>%
+  count(word, sort = TRUE)
+
+# View top 10 words
+head(word_freq, 10)
+
+# 4. Word frequency plot
+word_freq %>%
+  top_n(10) %>%
+  ggplot(aes(x = reorder(word, n), y = n)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Most Common Words in Trainer Notes", x = "Word", y = "Count")
+
+# 5. Sentiment analysis
+# install.packages("textdata"); library(textdata); download sentiment lexicons
+# library(textdata)
+sentiment_data <- word_data %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE)
+
+# 🐎 Example insight:
+# "Trainers most often use words like 'calm', 'responsive', and 'focused' in their notes.
+# Positive sentiment dominates, but certain horses are flagged with 'anxious' and 'stubborn'."

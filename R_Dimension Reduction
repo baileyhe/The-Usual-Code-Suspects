@@ -1,0 +1,35 @@
+### DIMENSIONALITY REDUCTION FOR HORSE DATA 🐎 ###
+
+# We'll use PCA and t-SNE to visualize performance traits
+
+# install.packages(c("ggplot2", "Rtsne"))
+library(ggplot2)
+library(Rtsne)
+
+# 1. Select and scale numeric traits
+traits <- scale(horse_data[, c("speed", "jump_height", "endurance", "heart_rate", "agility")])
+
+# 2. PCA (Principal Component Analysis)
+pca_result <- prcomp(traits, scale. = TRUE)
+summary(pca_result)
+
+# Plot PCA - colored by breed
+pca_df <- data.frame(pca_result$x[, 1:2], breed = horse_data$breed)
+ggplot(pca_df, aes(PC1, PC2, color = breed)) +
+  geom_point(size = 3) +
+  labs(title = "PCA of Horse Performance Traits")
+
+# 3. t-SNE (nonlinear dimensionality reduction for visualization)
+set.seed(42)
+tsne_result <- Rtsne(traits, dims = 2, perplexity = 5, verbose = TRUE)
+
+tsne_df <- data.frame(tsne_result$Y, breed = horse_data$breed)
+colnames(tsne_df) <- c("Dim1", "Dim2", "breed")
+
+ggplot(tsne_df, aes(Dim1, Dim2, color = breed)) +
+  geom_point(size = 3) +
+  labs(title = "t-SNE Clustering of Horses by Traits")
+
+# 🐎 Example insight:
+# "PCA shows that speed and endurance load heavily on the first component, distinguishing breeds.
+# t-SNE reveals natural clusters, suggesting some horses share performance profiles regardless of breed."

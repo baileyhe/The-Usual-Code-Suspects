@@ -1,0 +1,140 @@
+### EXPLORATORY DATA ANALYSIS (EDA) IN R — 🐎 ###
+
+# =======================================
+# 1. SUMMARY STATISTICS
+# =======================================
+# Use: Get min, max, mean, median, quartiles for each variable.
+# Data: Numeric or categorical.
+# Example insight: "The average speed of horses is 47.2 km/h with a max of 60."
+
+summary(horse_data)
+
+# =======================================
+# 2. FREQUENCY TABLES
+# =======================================
+# Use: Count occurrences of each level of a categorical variable.
+# Data: Categorical or binary variables.
+# Example insight: "There are 15 Thoroughbreds, 10 Arabians, and 5 Quarter Horses."
+
+table(horse_data$breed)
+
+# =======================================
+# 3. GROUPED SUMMARIES
+# =======================================
+# Use: Get mean/median/etc. by group (e.g., breed).
+# Data: Grouped numeric summaries.
+# Example insight: "Quarter Horses have the highest average endurance score."
+
+aggregate(endurance ~ breed, data = horse_data, FUN = mean)
+
+# =======================================
+# 4. HISTOGRAM
+# =======================================
+# Use: Visualize distribution of numeric variable.
+# Data: Numeric only.
+# Example insight: "Most horses cluster around a speed of 45–50 km/h."
+
+hist(horse_data$speed, main = "Horse Speed Distribution", xlab = "Speed (km/h)")
+
+# =======================================
+# 5. BOXPLOT
+# =======================================
+# Use: Visualize spread, median, and outliers.
+# Data: Numeric with optional group.
+# Example insight: "Arabian horses show more variability in heart rate."
+
+boxplot(heart_rate ~ breed, data = horse_data, main = "Heart Rate by Breed")
+
+# =======================================
+# 6. SCATTERPLOT
+# =======================================
+# Use: Explore relationship between two numeric variables.
+# Data: Numeric (both axes).
+# Example insight: "There’s a positive relationship between leg length and jump height."
+
+plot(leg_length ~ jump_height, data = horse_data)
+
+# =======================================
+# 7. CORRELATION MATRIX
+# =======================================
+# Use: Show pairwise correlations between numeric variables.
+# Data: Numeric only.
+# Example insight: "Speed and endurance are highly correlated."
+
+cor(horse_data[, c("speed", "endurance", "jump_height")])
+
+# Optional visualization:
+# install.packages("corrplot")
+library(corrplot)
+corrplot(cor(horse_data[, c("speed", "endurance", "jump_height")]), method = "circle")
+
+# =======================================
+# 8. PAIRWISE PLOTS
+# =======================================
+# Use: Matrix of scatterplots between variables.
+# Data: Numeric only.
+# Example insight: "You can spot clusters and relationships visually between physical traits."
+
+pairs(horse_data[, c("height", "weight", "speed")])
+
+# =======================================
+# 9. MISSING DATA CHECK
+# =======================================
+# Use: Check for missing values per column.
+# Data: Any.
+# Example insight: "Training_hours has 5 missing entries."
+
+colSums(is.na(horse_data))
+
+# Optional visual:
+# install.packages("naniar")
+library(naniar)
+vis_miss(horse_data)
+
+# =======================================
+# 10. VALUE COUNTS & PROPORTIONS
+# =======================================
+# Use: Examine raw and relative frequency of categories.
+# Data: Categorical.
+# Example insight: "40% of horses prefer shaded pastures."
+
+prop.table(table(horse_data$pasture_preference))
+
+# =======================================
+# 11. OUTLIER DETECTION
+# =======================================
+# Use: Detect extreme values in numeric columns.
+# Data: Numeric.
+# Example insight: "One horse has an unusually high jump height."
+
+boxplot.stats(horse_data$jump_height)$out
+
+# =======================================
+# 12. DENSITY PLOTS
+# =======================================
+# Use: Smoothed version of histogram.
+# Data: Numeric.
+# Example insight: "Speed is normally distributed with a slight right skew."
+
+plot(density(horse_data$speed), main = "Density Plot of Horse Speed")
+
+# =======================================
+# 13. CROSSTABS / CONTINGENCY TABLES
+# =======================================
+# Use: Examine joint frequencies of two categorical variables.
+# Data: Categorical.
+# Example insight: "Arabians are more likely to prefer shade than other breeds."
+
+table(horse_data$breed, horse_data$pasture_preference)
+
+# =======================================
+# 14. VIOLIN PLOTS (Optional visual combo of boxplot + density)
+# =======================================
+# Data: Numeric grouped by categorical.
+# Example insight: "Arabians have a bimodal distribution of endurance scores."
+
+# install.packages("ggplot2")
+library(ggplot2)
+ggplot(horse_data, aes(x = breed, y = endurance)) +
+  geom_violin(trim = FALSE) +
+  labs(title = "Endurance Score by Breed")

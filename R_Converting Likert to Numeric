@@ -1,0 +1,32 @@
+# Define Likert mappings across multiple common types
+likert_mappings <- list(
+  agreement = c("strongly_disagree", "disagree", "neither_agree_nor_disagree", "agree", "strongly_agree"),
+  frequency = c("never", "rarely", "sometimes", "often", "always"),
+  satisfaction = c("very_dissatisfied", "dissatisfied", "neutral", "satisfied", "very_satisfied"),
+  quality = c("very_poor", "poor", "fair", "good", "excellent"),
+  expectations = c("much_worse_than_expected", "worse_than_expected", "about_what_i_expected", "better_than_expected", "much_better_than_expected"),
+  seriousness = c("not_at_all_serious", "slightly_serious", "moderately_serious", "very_serious", "extremely_serious"),
+  capability = c("not_at_all_well", "slightly_well", "adequately", "very_well", "extremely_well"),
+  usefulness = c("not_at_all_useful", "slightly_useful", "moderately_useful", "very_useful", "extremely_useful"),
+  supportiveness = c("not_at_all_supportive", "slightly_supportive", "moderately_supportive", "very_supportive", "extremely_supportive"),
+  comfort = c("very_uncomfortable", "uncomfortable", "neutral", "comfortable", "very_comfortable")
+)
+
+# Function to convert Likert strings to numeric (1-5), handling "none_of_the_above" as NA
+convert_likert_column <- function(col) {
+  if (!is.character(col) && !is.factor(col)) return(col)
+  
+  col <- as.character(col)
+  col[col == "none_of_the_above"] <- NA  # Treat as NA
+  
+  for (scale in likert_mappings) {
+    if (all(na.omit(unique(col)) %in% scale)) {
+      return(match(col, scale))
+    }
+  }
+  
+  return(col)
+}
+
+# Apply conversion to each column
+df_numeric <- as.data.frame(lapply(df, convert_likert_column), stringsAsFactors = FALSE)

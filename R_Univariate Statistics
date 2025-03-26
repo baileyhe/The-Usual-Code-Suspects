@@ -1,0 +1,134 @@
+### UNIVARIATE STATISTICAL TESTS IN R ###
+
+# =============================
+# 1. INDEPENDENT T-TEST
+# =============================
+# Use: Compare means between two independent groups (assumes normality & equal variances).
+# Data: Numeric outcome, binary grouping variable.
+# Non-parametric alternative: Wilcoxon rank-sum test (Mann-Whitney U).
+# Example insight: "Thoroughbreds have significantly higher average race speeds than Arabians."
+
+t.test(speed ~ breed, data = horse_data)
+
+# =============================
+# 2. WILCOXON RANK-SUM TEST
+# =============================
+# Use: Non-parametric alternative to t-test for two independent groups.
+# Data: Ordinal or numeric outcome, binary group.
+# Parametric alternative: t-test.
+# Example insight: "Arabian horses tend to have lower endurance scores than Quarter Horses."
+
+wilcox.test(endurance ~ breed, data = horse_data)
+
+# =============================
+# 3. PAIRED T-TEST
+# =============================
+# Use: Compare means in two related measurements (e.g., before/after).
+# Data: Numeric, paired observations.
+# Non-parametric alternative: Wilcoxon signed-rank test.
+# Example insight: "Horse heart rate significantly decreased after a 10-minute cool-down."
+
+t.test(heart_rate_before, heart_rate_after, paired = TRUE)
+
+# =============================
+# 4. WILCOXON SIGNED-RANK TEST
+# =============================
+# Use: Non-parametric test for paired data (e.g., pre/post).
+# Data: Numeric or ordinal, paired.
+# Parametric alternative: Paired t-test.
+# Example insight: "Horse anxiety ratings improved after switching to a natural pasture diet."
+
+wilcox.test(anxiety_before, anxiety_after, paired = TRUE)
+
+# =============================
+# 5. ONE-WAY ANOVA
+# =============================
+# Use: Compare means across 3+ independent groups.
+# Data: Numeric outcome, categorical group variable.
+# Non-parametric alternative: Kruskal-Wallis test.
+# Example insight: "Average jump height differs across horse training methods."
+
+anova_result <- aov(jump_height ~ training_method, data = horse_data)
+summary(anova_result)
+
+# =============================
+# 6. KRUSKAL-WALLIS TEST
+# =============================
+# Use: Non-parametric ANOVA for 3+ groups.
+# Data: Ordinal or numeric outcome, categorical group.
+# Parametric alternative: One-way ANOVA.
+# Example insight: "Temperament scores vary significantly across horse breeds."
+
+kruskal.test(temperament ~ breed, data = horse_data)
+
+# =============================
+# 7. CHI-SQUARE TEST OF INDEPENDENCE
+# =============================
+# Use: Test association between two categorical variables.
+# Data: 2-way contingency table.
+# Alternative: Fisher’s exact test (for small expected counts).
+# Example insight: "There is an association between horse coat color and breed."
+
+table_data <- table(horse_data$coat_color, horse_data$breed)
+chisq.test(table_data)
+
+# =============================
+# 8. FISHER'S EXACT TEST
+# =============================
+# Use: Categorical association when expected counts are small (<5 in any cell).
+# Data: 2x2 contingency table.
+# Alternative: Chi-square test (for larger samples).
+# Example insight: "A rare coat pattern is significantly more common in draft horses."
+
+fisher.test(table_data)
+
+# =============================
+# 9. McNEMAR'S TEST
+# =============================
+# Use: Compare proportions in paired nominal data (e.g., pre/post yes/no).
+# Data: 2x2 matrix of paired counts.
+# Example insight: "More horses were reported as calm after using a new saddle pad than before."
+
+mcnemar_matrix <- matrix(c(30, 10, 5, 55), nrow = 2,
+                         dimnames = list("Before" = c("Calm", "Not_Calm"),
+                                         "After" = c("Calm", "Not_Calm")))
+mcnemar.test(mcnemar_matrix)
+
+# =============================
+# 10. COCHRAN'S Q TEST
+# =============================
+# Use: Like a repeated-measures chi-square for 3+ related binary variables.
+# Data: Long format: binary outcome (0/1), repeated measures per subject.
+# Example insight: "Horse response to three calming techniques differs significantly."
+
+# Requires 'DescTools' package
+# install.packages("DescTools")
+library(DescTools)
+
+# Example: binary responses from same horse to 3 techniques
+# horse_id, method (A/B/C), responded (0/1)
+# Data must be wide format (one row per horse)
+cochran_data <- data.frame(
+  horse = 1:10,
+  method_A = c(1,0,1,1,0,1,0,1,1,0),
+  method_B = c(0,0,1,0,0,1,1,1,1,1),
+  method_C = c(1,0,0,0,1,1,1,1,0,0)
+)
+
+CochranQTest(cochran_data[, c("method_A", "method_B", "method_C")])
+
+# Assuming each horse has yes/no responses across 3 sessions
+# 1 = Yes (calm), 0 = No (not calm)
+
+# install.packages("DescTools")
+library(DescTools)
+
+calming_responses <- data.frame(
+  horse = 1:10,
+  session1 = c(1,0,1,1,0,1,0,1,1,0),
+  session2 = c(0,0,1,0,0,1,1,1,1,1),
+  session3 = c(1,0,0,0,1,1,1,1,0,0)
+)
+
+# Cochran's Q test across 3 timepoints
+CochranQTest(calming_responses[, c("session1", "session2", "session3")])

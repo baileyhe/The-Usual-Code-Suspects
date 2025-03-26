@@ -1,0 +1,29 @@
+### FEATURE ENGINEERING FOR HORSE DATA 🐎 ###
+
+# 1. Normalize numeric variables (e.g., for ML models)
+horse_data$speed_z <- scale(horse_data$speed)
+horse_data$heart_rate_z <- scale(horse_data$heart_rate)
+
+# 2. Create an interaction term
+# Example: Training hours might affect speed differently depending on breed
+horse_data$breed_training <- interaction(horse_data$breed, horse_data$training_method)
+
+# 3. Convert categorical variable to dummy variables
+# install.packages("fastDummies")
+library(fastDummies)
+horse_data <- dummy_cols(horse_data, select_columns = "training_method", remove_selected_columns = TRUE)
+
+# 4. Create a new feature: fitness index
+# Combine multiple performance metrics into one custom score
+horse_data$fitness_index <- with(horse_data, (speed + endurance + jump_height) / 3)
+
+# 5. Binning a continuous variable
+# Turn speed into categories (slow, average, fast)
+horse_data$speed_cat <- cut(horse_data$speed,
+                            breaks = quantile(horse_data$speed, probs = c(0, 0.33, 0.66, 1), na.rm = TRUE),
+                            labels = c("slow", "average", "fast"),
+                            include.lowest = TRUE)
+
+# 🐎 Example insight:
+# "After creating a fitness index, we found that fast-recovering horses with high fitness scores
+# perform better regardless of breed. Also, speed bins help us identify which horses need targeted training."

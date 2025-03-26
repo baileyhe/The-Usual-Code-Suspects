@@ -1,0 +1,124 @@
+### MULTIVARIATE STATISTICAL TESTS IN R 🐎 ###
+
+# =======================================
+# 1. MULTIPLE LINEAR REGRESSION
+# =======================================
+# Use: Predict a numeric outcome using multiple predictors (numeric or categorical).
+# Data: Numeric dependent variable, 2+ predictors.
+# Assumptions: Linearity, independence, homoscedasticity, normal residuals.
+# Example insight: "Horse race time is predicted by heart rate, training hours, and breed."
+
+lm_model <- lm(race_time ~ heart_rate + training_hours + breed, data = horse_data)
+summary(lm_model)
+
+# =======================================
+# 2. LOGISTIC REGRESSION (BINARY)
+# =======================================
+# Use: Predict a binary outcome (e.g., yes/no) using 2+ predictors.
+# Data: Binary dependent variable, 2+ predictors.
+# Example insight: "Probability of a horse refusing a jump is predicted by anxiety and experience."
+
+log_model <- glm(refused_jump ~ anxiety + experience_level, data = horse_data, family = "binomial")
+summary(log_model)
+
+# =======================================
+# 3. MULTINOMIAL LOGISTIC REGRESSION
+# =======================================
+# Use: Predict a categorical outcome with 3+ levels.
+# Data: Multiclass outcome, 2+ predictors.
+# Requires: `nnet` package.
+# Example insight: "Preferred grazing zone (shade, sun, mixed) is influenced by age and breed."
+
+# install.packages("nnet")
+library(nnet)
+multinom_model <- multinom(grazing_preference ~ age + breed, data = horse_data)
+summary(multinom_model)
+
+# =======================================
+# 4. MANOVA (Multivariate ANOVA)
+# =======================================
+# Use: Test group differences on multiple numeric outcomes at once.
+# Data: Multiple numeric DVs, categorical IV.
+# Assumptions: Multivariate normality, homogeneity of covariance.
+# Example insight: "Horse breed influences both speed and stamina."
+
+manova_model <- manova(cbind(speed, stamina) ~ breed, data = horse_data)
+summary(manova_model)
+
+# =======================================
+# 5. PRINCIPAL COMPONENT ANALYSIS (PCA)
+# =======================================
+# Use: Reduce dimensionality of numeric variables by extracting components.
+# Data: Numeric variables (standardized if on different scales).
+# Example insight: "Two principal components capture most variation in horse performance scores."
+
+pca_vars <- horse_data[, c("speed", "jump_height", "endurance")]
+pca_result <- prcomp(pca_vars, scale. = TRUE)
+summary(pca_result)
+biplot(pca_result)
+
+# =======================================
+# 6. FACTOR ANALYSIS
+# =======================================
+# Use: Identify underlying factors in sets of correlated variables.
+# Data: Numeric, often psychometric/survey.
+# Requires: `psych` package.
+# Example insight: "Temperament traits form two latent factors: sociability and anxiety."
+
+# install.packages("psych")
+library(psych)
+fa_result <- fa(horse_data[, temperament_items], nfactors = 2, rotate = "varimax")
+print(fa_result)
+
+# =======================================
+# 7. K-MEANS CLUSTERING
+# =======================================
+# Use: Group horses into clusters based on continuous features.
+# Data: Numeric variables only.
+# Example insight: "Horses cluster into groups based on performance traits."
+
+set.seed(123)
+cluster_data <- scale(horse_data[, c("speed", "endurance", "agility")])
+kmeans_result <- kmeans(cluster_data, centers = 3)
+table(kmeans_result$cluster)
+
+# =======================================
+# 8. LINEAR DISCRIMINANT ANALYSIS (LDA)
+# =======================================
+# Use: Predict group membership based on numeric predictors.
+# Data: Categorical DV, numeric IVs.
+# Requires: `MASS` package.
+# Example insight: "Jump success category is predicted by leg strength and focus score."
+
+# install.packages("MASS")
+library(MASS)
+lda_model <- lda(jump_success ~ leg_strength + focus_score, data = horse_data)
+plot(lda_model)
+
+# =======================================
+# 9. CANONICAL CORRELATION ANALYSIS (CCA)
+# =======================================
+# Use: Explore relationships between two sets of numeric variables.
+# Data: Two sets of numeric variables (X and Y).
+# Requires: `CCA` package.
+# Example insight: "Body metrics correlate with performance measures."
+
+# install.packages("CCA")
+library(CCA)
+X <- horse_data[, c("height", "weight", "leg_length")]
+Y <- horse_data[, c("speed", "stamina", "jump_height")]
+cc_result <- cc(X, Y)
+cc_result$cor  # Canonical correlations
+
+# =======================================
+# 10. MULTIVARIATE LOGISTIC REGRESSION
+# =======================================
+# Use: Model multiple binary outcomes with shared predictors.
+# Data: Multiple binary outcomes, same predictors.
+# Requires: `mvabund` or workaround with multiple glm.
+# Example insight: "Training type predicts both jump refusal and nervous behaviors."
+
+# install.packages("mvabund")
+# library(mvabund)
+# mv_model <- manyglm(cbind(refused_jump, nervous_behavior) ~ training_type, family = "binomial", data = horse_data)
+# summary(mv_model)

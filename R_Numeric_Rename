@@ -1,0 +1,26 @@
+###ADDING NUMERIC COLUMNS####
+
+add_numeric_prefix_columns <- function(df) {
+  is_number_prefixed <- function(col) {
+    is.character(col) || is.factor(col) &&
+      any(grepl("^[0-9]+_", as.character(col), useBytes = TRUE))
+  }
+
+  for (colname in names(df)) {
+    col <- df[[colname]]
+    
+    if (is_number_prefixed(col)) {
+      numeric_col <- as.numeric(sub("^([0-9]+)_.*", "\\1", as.character(col)))
+      new_colname <- paste0(colname, "_numeric")
+      df[[new_colname]] <- numeric_col
+    }
+  }
+  
+  return(df)
+}
+
+
+###APPLY IT####
+
+df <- add_numeric_prefix_columns(df)
+

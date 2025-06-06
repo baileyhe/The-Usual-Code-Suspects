@@ -1,11 +1,19 @@
-####MAKE CLEAN DF FUNCTION####
+#### CLEAN DATAFRAME FUNCTION ####
 
 clean_dataframe <- function(df) {
-  # 1. Clean column names: lowercase + underscores instead of spaces, remove ._
-  names(df) <- tolower(gsub(" ", "_", names(df)))
-  names(df) <- gsub("\\._", "_", names(df))
+  # 1. Replace blank column names
+  original_names <- names(df)
+  original_names[original_names == ""] <- paste0("blank_", seq_len(sum(original_names == "")))
 
-  # 2. Standardize NA values: convert "N/A", "na", "NA", "" to actual NA
+  # 2. Clean column names
+  clean_names <- tolower(original_names)
+  clean_names <- gsub(" ", "_", clean_names)
+  clean_names <- gsub("\\._", "_", clean_names)
+  clean_names <- gsub(",", "", clean_names)
+  clean_names <- gsub("[^a-z0-9_@%]", "", clean_names)  # remove all except a-z, 0-9, _, @, %
+  names(df) <- clean_names
+
+  # 3. Standardize NA values
   na_strings <- c("N/A", "na", "NA", "")
   df <- as.data.frame(lapply(df, function(col) {
     if (is.character(col)) {
@@ -15,12 +23,14 @@ clean_dataframe <- function(df) {
     return(col)
   }), stringsAsFactors = FALSE)
 
-  # 3. Clean categorical (character or factor) columns: lowercase + underscores, remove ._
+  # 4. Clean character/factor columns
   df <- as.data.frame(lapply(df, function(col) {
     if (is.factor(col) || is.character(col)) {
       col <- tolower(col)
       col <- gsub(" ", "_", col)
       col <- gsub("\\._", "_", col)
+      col <- gsub(",", "", col)
+      col <- gsub("[^a-z0-9_@%]", "", col)  # remove all except a-z, 0-9, _, @, %
       col <- as.character(col)
     }
     return(col)
@@ -28,7 +38,3 @@ clean_dataframe <- function(df) {
 
   return(df)
 }
-
-####USE IT####
-
-df <- clean_dataframe(df)

@@ -76,104 +76,44 @@ saturation_90 <- nls_fits %>%
 print(saturation_90)
 
 
-####MORE DETAILED ANALYSIS ATTEMPT####
-
-#### SORT BY TIME AND CUMULATE PER INDIVIDUAL ####
-df <- df %>%
-  dplyr::arrange(name, start_time) %>%
-  dplyr::group_by(name) %>%
-  dplyr::mutate(total_duration = cumsum(duration)) %>%
-  dplyr::ungroup()
-
-#### TRUE CUMULATIVE UNIQUE BEHAVIOURS PER INDIVIDUAL ####
-build_unique_counts <- function(df_indiv) {
-  behaviours_seen <- character()
-  result <- vector("integer", length = nrow(df_indiv))
-  for (i in seq_along(result)) {
-    behaviours_seen <- union(behaviours_seen, df_indiv$behaviour[i])
-    result[i] <- length(behaviours_seen)
-  }
-  df_indiv$total_unique <- result
-  return(df_indiv)
-}
-
-behav_summary <- df %>%
-  dplyr::arrange(name, total_duration) %>%
-  dplyr::group_by(name) %>%
-  dplyr::group_split() %>%
-  purrr::map_dfr(build_unique_counts)
-
-#### PLOT SATURATION CURVES PER INDIVIDUAL ####
-ggplot(behav_summary, aes(x = total_duration, y = total_unique)) +
-  geom_line(color = "blue") +
-  facet_wrap(~name) +
-  labs(x = "Cumulative Duration (seconds)",
-       y = "Cumulative Unique Behaviours",
-       title = "Behavioural Saturation Curves by Individual") +
-  theme_minimal()
-
-#### NONLINEAR MODEL PER INDIVIDUAL ####
-nls_fits <- behav_summary %>%
-  dplyr::group_by(name) %>%
-  tidyr::nest() %>%
-  dplyr::mutate(model = purrr::map(data, ~ tryCatch(
-    nls(total_unique ~ SSasymp(total_duration, Asym, R0, lrc), data = .x),
-    error = function(e) NULL)),
-    fit = purrr::map2(data, model, ~ if (!is.null(.y)) predict(.y, newdata = .x) else rep(NA, nrow(.x)))) %>%
-  tidyr::unnest(c(data, fit))
-
-#### PLOT OBSERVED VS FITTED ####
-ggplot(nls_fits, aes(x = total_duration, y = total_unique)) +
-  geom_line(color = "blue") +
-  geom_line(aes(y = fit), color = "red", linetype = "dashed") +
-  facet_wrap(~name) +
-  labs(x = "Cumulative Duration (seconds)",
-       y = "Cumulative Unique Behaviours",
-       title = "Observed vs Fitted Saturation by Individual") +
-  theme_minimal()
-
-#### CALCULATE 90% SATURATION TIME ####
-saturation_90 <- nls_fits %>%
-  dplyr::group_by(name) %>%
-  dplyr::summarise(
-    model = list(tryCatch(
-      nls(total_unique ~ SSasymp(total_duration, Asym, R0, lrc), data = dplyr::cur_data()),
-      error = function(e) NULL)),
-    .groups = "drop"
-  ) %>%
-  dplyr::mutate(
-    Asym = purrr::map_dbl(model, ~ if (!is.null(.x)) coef(.x)["Asym"] else NA),
-    lrc = purrr::map_dbl(model, ~ if (!is.null(.x)) coef(.x)["lrc"] else NA),
-    R0 = purrr::map_dbl(model, ~ if (!is.null(.x)) coef(.x)["R0"] else NA),
-    target_value = Asym * 0.9,
-    time_to_90 = (log((Asym - R0)/(Asym - target_value)))/exp(lrc)
-  ) %>%
-  dplyr::select(name, Asym, target_value, time_to_90)
-
-print(saturation_90)
-
-#### TIME BLOCK ANALYSIS FOR BEHAVIOURAL DIVERSITY ####
+#### MORE GRANULAR TIME BLOCKS ####
 df <- df %>%
   dplyr::mutate(hour = lubridate::hour(start_time)) %>%
-  dplyr::mutate(time_block = dplyr::case_when(
-    hour < 12 ~ "Morning",
-    hour < 17 ~ "Afternoon",
-    TRUE ~ "Evening"
+  dplyr::mutate(time_block_detailed = dplyr::case_when(
+    hour >= 5 & hour < 9 ~ "Early Morning",
+    hour >= 9 & hour < 12 ~ "Late Morning",
+    hour >= 12 & hour < 15 ~ "Early Afternoon",
+    hour >= 15 & hour < 18 ~ "Late Afternoon",
+    hour >= 18 & hour < 22 ~ "Evening",
+    TRUE ~ "Night"
   ))
 
-# Behaviour diversity per individual per block
-time_block_summary <- df %>%
-  dplyr::group_by(name, time_block) %>%
-  dplyr::summarise(
-    duration_sum = sum(duration, na.rm = TRUE),
-    unique_behaviours = dplyr::n_distinct(behaviour),
-    .groups = "drop"
-  )
+#### CUMULATIVE BEHAVIOUR COUNTS BY TIME BLOCK ####
+build_block_counts <- function(df_sub) {
+  df_sub <- df_sub %>% dplyr::arrange(start_time)
+  behaviours_seen <- character()
+  result <- vector("integer", length = nrow(df_sub))
+  for (i in seq_along(result)) {
+    behaviours_seen <- union(behaviours_seen, df_sub$behaviour[i])
+    result[i] <- length(behaviours_seen)
+  }
+  df_sub$total_unique <- result
+  return(df_sub)
+}
 
-# Plotting behavioural diversity by time block
-ggplot(time_block_summary, aes(x = time_block, y = unique_behaviours, fill = name)) +
-  geom_col(position = "dodge") +
-  labs(x = "Time of Day", y = "Unique Behaviours",
-       title = "Behavioural Diversity by Time Block and Individual") +
+block_behav_summary <- df %>%
+  dplyr::group_by(name, time_block_detailed) %>%
+  dplyr::group_split() %>%
+  purrr::map_dfr(build_block_counts)
+
+#### PLOT BY TIME BLOCK ####
+ggplot(block_behav_summary, aes(x = cumsum(duration), y = total_unique)) +
+  geom_line(color = "darkgreen") +
+  facet_grid(name ~ time_block_detailed) +
+  labs(x = "Cumulative Duration (seconds)",
+       y = "Cumulative Unique Behaviours",
+       title = "Saturation Curves by Time Block and Individual") +
   theme_minimal()
+
+
 

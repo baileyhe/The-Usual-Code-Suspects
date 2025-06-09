@@ -6,8 +6,6 @@ library(forcats)
 library(purrr)
 
 #### CLEAN FACTOR LEVELS ####
-df <- df %>%
-  mutate(across(where(is.factor), ~fct_recode(., hors = "horse")))
 
 # OR manually for specific vars if needed:
 df$animal <- recode(df$animal, hors = "horse")
@@ -21,10 +19,18 @@ df <- df %>%
 
 # Cumulative unique behaviours per individual
 behav_summary <- df %>%
-  group_by(name, total_duration) %>%
-  summarise(unique_behaviours = n_distinct(behaviour), .groups = "drop_last") %>%
-  mutate(total_unique = cumsum(unique_behaviours)) %>%
-  ungroup()
+  arrange(name, total_duration) %>%
+  group_by(name) %>%
+  mutate(unique_so_far = map2(total_duration, name, ~ {
+    df %>%
+      filter(name == .y, total_duration <= .x) %>%
+      pull(behaviour) %>%
+      unique()
+  })) %>%
+  mutate(total_unique = map_int(unique_so_far, length)) %>%
+  select(name, total_duration, total_unique) %>%
+  distinct()
+
 
 #### PLOT SATURATION CURVES PER INDIVIDUAL ####
 ggplot(behav_summary, aes(x = total_duration, y = total_unique)) +

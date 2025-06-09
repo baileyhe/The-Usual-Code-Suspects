@@ -36,17 +36,16 @@ ggplot(behav_summary, aes(x = total_duration, y = total_unique)) +
   theme_minimal()
 
 #### NONLINEAR MODEL PER INDIVIDUAL ####
-# Fit Michaelis-Menten model for each individual
 nls_fits <- behav_summary %>%
   group_by(name) %>%
   nest() %>%
   mutate(model = map(data, ~ tryCatch(
     nls(total_unique ~ SSasymp(total_duration, Asym, R0, lrc), data = .x),
-    error = function(e) NULL))) %>%
-  mutate(fit = map2(data, model, ~ if (!is.null(.y)) predict(.y, newdata = .x) else rep(NA, nrow(.x)))) %>%
+    error = function(e) NULL)),
+    fit = map2(data, model, ~ if (!is.null(.y)) predict(.y, newdata = .x) else rep(NA, nrow(.x)))) %>%
   unnest(c(data, fit))
 
-# Plot with model overlays
+#### PLOT OBSERVED VS FITTED ####
 ggplot(nls_fits, aes(x = total_duration, y = total_unique)) +
   geom_line(color = "blue") +
   geom_line(aes(y = fit), color = "red", linetype = "dashed") +
@@ -55,3 +54,23 @@ ggplot(nls_fits, aes(x = total_duration, y = total_unique)) +
        y = "Cumulative Unique Behaviours",
        title = "Observed vs Fitted Saturation by Individual") +
   theme_minimal()
+
+#### CALCULATE 90% SATURATION TIME ####
+saturation_90 <- nls_fits %>%
+  group_by(name) %>%
+  summarise(
+    model = list(tryCatch(
+      nls(total_unique ~ SSasymp(total_duration, Asym, R0, lrc), data = cur_data()),
+      error = function(e) NULL)),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    Asym = map_dbl(model, ~ if (!is.null(.x)) coef(.x)["Asym"] else NA),
+    lrc = map_dbl(model, ~ if (!is.null(.x)) coef(.x)["lrc"] else NA),
+    R0 = map_dbl(model, ~ if (!is.null(.x)) coef(.x)["R0"] else NA),
+    target_value = Asym * 0.9,
+    time_to_90 = (log((Asym - R0)/(Asym - target_value)))/exp(lrc)
+  ) %>%
+  select(name, Asym, target_value, time_to_90)
+
+print(saturation_90)

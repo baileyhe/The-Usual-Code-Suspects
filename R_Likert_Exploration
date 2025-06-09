@@ -1,0 +1,47 @@
+#### LOAD LIBRARIES ####
+library(dplyr)
+library(ggplot2)
+library(randomForest)
+library(FactoMineR)
+library(factoextra)
+
+#### STEP 1: Recode Likert responses ####
+likert_map <- c(
+  "strongly_disagree" = 1,
+  "disagree" = 2,
+  "neutral" = 3,
+  "agree" = 4,
+  "strongly_agree" = 5
+)
+
+df_numeric <- df %>%
+  mutate(across(everything(), ~ ifelse(. %in% names(likert_map), likert_map[.], .))) %>%
+  mutate(across(where(is.character), as.numeric))
+
+#### STEP 2: Keep only numeric + selected extra columns ####
+df_model <- df_numeric %>%
+  select(where(is.numeric), id, group, overall)
+
+#### STEP 3A: Cluster questions using PCA ####
+df_questions <- df_model %>% select(-id, -group, -overall)
+
+pca_result <- prcomp(df_questions, scale. = TRUE)
+
+# PCA scree plot
+fviz_eig(pca_result)
+
+# PCA variable contribution biplot
+fviz_pca_var(pca_result, col.var = "contrib", repel = TRUE)
+
+#### STEP 3B: Hierarchical clustering of questions ####
+d <- dist(t(df_questions))
+hc <- hclust(d)
+plot(hc, main = "Clustering of Likert Questions", xlab = "", sub = "")
+
+#### STEP 4: Random Forest to Predict 'overall' ####
+df_rf <- df_model %>% filter(!is.na(overall))
+
+rf_model <- randomForest(overall ~ ., data = df_rf %>% select(-id, -group), importance = TRUE)
+
+# Variable importance plot
+varImpPlot(rf_model, main = "Feature Importance: Predicting Overall Score")

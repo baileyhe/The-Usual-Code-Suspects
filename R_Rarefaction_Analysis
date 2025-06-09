@@ -119,4 +119,26 @@ ggplot(block_behav_summary, aes(x = cum_duration, y = total_unique)) +
   theme_minimal()
 
 
+#### CALCULATE 90% SATURATION TIME PER INDIVIDUAL PER TIME BLOCK ####
+saturation_block_90 <- block_behav_summary %>%
+  group_by(name, time_block_detailed) %>%
+  summarise(
+    model = list(tryCatch(
+      nls(total_unique ~ SSasymp(cum_duration, Asym, R0, lrc), data = cur_data()),
+      error = function(e) NULL)),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    Asym = map_dbl(model, ~ if (!is.null(.x)) coef(.x)["Asym"] else NA),
+    lrc = map_dbl(model, ~ if (!is.null(.x)) coef(.x)["lrc"] else NA),
+    R0 = map_dbl(model, ~ if (!is.null(.x)) coef(.x)["R0"] else NA),
+    target_value = Asym * 0.9,
+    time_to_90 = (log((Asym - R0)/(Asym - target_value)))/exp(lrc)
+  ) %>%
+  select(name, time_block_detailed, Asym, target_value, time_to_90)
+
+print(saturation_block_90)
+
+
+
 

@@ -15,13 +15,11 @@ likert_map <- c(
 )
 
 df_numeric <- df %>%
-  mutate(across(where(is.character), ~ case_when(
-    . %in% names(likert_map) ~ as.character(likert_map[.]),
-    . == "unknown" ~ "",
-    TRUE ~ .
-  ))) %>%
-  mutate(across(where(~ all(.x %in% as.character(likert_map)), .names = NULL), as.numeric))
-
+  mutate(across(where(is.character), ~ {
+    ifelse(. == "unknown", "",        # Replace "unknown" with blank
+           ifelse(. %in% names(likert_map), as.character(likert_map[.]), .))
+  })) %>%
+  mutate(across(where(is.character), ~ suppressWarnings(as.numeric(.))))
 
 #### STEP 2: Keep only numeric + selected extra columns ####
 df_model <- df_numeric %>%

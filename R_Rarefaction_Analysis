@@ -17,19 +17,13 @@ df <- df %>%
   mutate(total_duration = cumsum(duration)) %>%
   ungroup()
 
-# Cumulative unique behaviours per individual
+#### TRUE CUMULATIVE UNIQUE BEHAVIOURS PER INDIVIDUAL ####
 behav_summary <- df %>%
   arrange(name, total_duration) %>%
   group_by(name) %>%
-  mutate(unique_so_far = map2(total_duration, name, ~ {
-    df %>%
-      filter(name == .y, total_duration <= .x) %>%
-      pull(behaviour) %>%
-      unique()
-  })) %>%
-  mutate(total_unique = map_int(unique_so_far, length)) %>%
+  mutate(total_unique = accumulate(behaviour, ~ union(.x, .y)) %>% map_int(length)) %>%
   select(name, total_duration, total_unique) %>%
-  distinct()
+  ungroup()
 
 
 #### PLOT SATURATION CURVES PER INDIVIDUAL ####

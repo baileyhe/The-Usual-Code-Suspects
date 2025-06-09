@@ -90,7 +90,10 @@ df <- df %>%
 
 #### CUMULATIVE BEHAVIOUR COUNTS BY TIME BLOCK ####
 build_block_counts <- function(df_sub) {
-  df_sub <- df_sub %>% dplyr::arrange(start_time)
+  df_sub <- df_sub %>%
+    arrange(start_time) %>%
+    mutate(cum_duration = cumsum(duration))  # ADD this line
+
   behaviours_seen <- character()
   result <- vector("integer", length = nrow(df_sub))
   for (i in seq_along(result)) {
@@ -102,12 +105,12 @@ build_block_counts <- function(df_sub) {
 }
 
 block_behav_summary <- df %>%
-  dplyr::group_by(name, time_block_detailed) %>%
-  dplyr::group_split() %>%
-  purrr::map_dfr(build_block_counts)
+  group_by(name, time_block_detailed) %>%
+  group_split() %>%
+  map_dfr(build_block_counts)
 
-#### PLOT BY TIME BLOCK ####
-ggplot(block_behav_summary, aes(x = cumsum(duration), y = total_unique)) +
+
+ggplot(block_behav_summary, aes(x = cum_duration, y = total_unique)) +
   geom_line(color = "darkgreen") +
   facet_grid(name ~ time_block_detailed) +
   labs(x = "Cumulative Duration (seconds)",

@@ -43,7 +43,12 @@ hc <- hclust(d)
 plot(hc, main = "Clustering of Likert Questions", xlab = "", sub = "")
 
 #### STEP 4: Random Forest to Predict 'overall' ####
+
 df_rf <- df_model %>% filter(!is.na(overall))
+
+df_rf$overall <- factor(df_rf$overall, levels = c(
+  "extremely_poor", "poor", "neutral", "good", "extremely_good"
+), ordered = TRUE)
 
 rf_model <- randomForest(overall ~ ., data = df_rf %>% select(-id, -group), importance = TRUE)
 

@@ -1,0 +1,57 @@
+#### LOAD LIBRARIES ####
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(forcats)
+library(purrr)
+
+#### CLEAN FACTOR LEVELS ####
+df <- df %>%
+  mutate(across(where(is.factor), ~fct_recode(., hors = "horse")))
+
+# OR manually for specific vars if needed:
+df$animal <- recode(df$animal, hors = "horse")
+
+#### SORT BY TIME AND CUMULATE PER INDIVIDUAL ####
+df <- df %>%
+  arrange(name, start_time) %>%
+  group_by(name) %>%
+  mutate(total_duration = cumsum(duration)) %>%
+  ungroup()
+
+# Cumulative unique behaviours per individual
+behav_summary <- df %>%
+  group_by(name, total_duration) %>%
+  summarise(unique_behaviours = n_distinct(behaviour), .groups = "drop_last") %>%
+  mutate(total_unique = cumsum(unique_behaviours)) %>%
+  ungroup()
+
+#### PLOT SATURATION CURVES PER INDIVIDUAL ####
+ggplot(behav_summary, aes(x = total_duration, y = total_unique)) +
+  geom_line(color = "blue") +
+  facet_wrap(~name) +
+  labs(x = "Cumulative Duration (seconds)",
+       y = "Cumulative Unique Behaviours",
+       title = "Behavioural Saturation Curves by Individual") +
+  theme_minimal()
+
+#### NONLINEAR MODEL PER INDIVIDUAL ####
+# Fit Michaelis-Menten model for each individual
+nls_fits <- behav_summary %>%
+  group_by(name) %>%
+  nest() %>%
+  mutate(model = map(data, ~ tryCatch(
+    nls(total_unique ~ SSasymp(total_duration, Asym, R0, lrc), data = .x),
+    error = function(e) NULL))) %>%
+  mutate(fit = map2(data, model, ~ if (!is.null(.y)) predict(.y, newdata = .x) else rep(NA, nrow(.x)))) %>%
+  unnest(c(data, fit))
+
+# Plot with model overlays
+ggplot(nls_fits, aes(x = total_duration, y = total_unique)) +
+  geom_line(color = "blue") +
+  geom_line(aes(y = fit), color = "red", linetype = "dashed") +
+  facet_wrap(~name) +
+  labs(x = "Cumulative Duration (seconds)",
+       y = "Cumulative Unique Behaviours",
+       title = "Observed vs Fitted Saturation by Individual") +
+  theme_minimal()

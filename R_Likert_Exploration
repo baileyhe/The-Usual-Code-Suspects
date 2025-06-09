@@ -15,9 +15,7 @@ likert_map <- c(
 )
 
 df_numeric <- df %>%
-  mutate(across(where(is.character), ~ {
-    ifelse(. %in% names(likert_map), as.numeric(likert_map[.]), .)
-  }))
+  mutate(across(where(is.character), ~ ifelse(. %in% names(likert_map), as.numeric(likert_map[.]), .)))
 
 #### STEP 2: Keep only numeric + selected extra columns ####
 df_model <- df_numeric %>%
